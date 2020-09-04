@@ -3,10 +3,6 @@
 # @Author: Jason
 # @Time: 9月 03, 2020
 # ---
-# import easygui as gui
-# gui.ccbox(msg='测试',title='生成lic',choices=('自动','手动'))
-#
-# gui.ccbox(msg='测试',title='生成lic',choices=('提交','取消'))
 
 from tkinter import *
 import tkinter.messagebox
@@ -14,10 +10,12 @@ import authorization
 import wmi
 import os
 
+
 def main():
-    def generate_lic():
+    # 根据手动输入的CPU序列号生成lic
+    def generate_lic_manual():
         mechanCode = E1.get()
-        if mechanCode :
+        if mechanCode:
             cipher = authorization.RSACipher()
             cipher.__init__()
             cipherCode = cipher.encrypt_with_public_key(mechanCode)
@@ -25,19 +23,24 @@ def main():
         else:
             tkinter.messagebox.askokcancel('温馨提示', '请输入CPU序列号')
 
+    # 读取当前CPU序列号自动生成lic
     def generate_lic_auto():
         c = wmi.WMI()
         cipher = authorization.RSACipher()
         cipher.__init__()
         for cpu in c.Win32_Processor():
-            mechanCode = cpu.ProcessorId.strip()
-        cipherCode = cipher.encrypt_with_public_key(mechanCode)
+            mechineCode = cpu.ProcessorId.strip()
+        cipherCode = cipher.encrypt_with_public_key(mechineCode)
+        # 打印私钥用来解密
+        # print(cipher.get_private_key())
         save_lic(cipherCode)
 
+    # 保存lic文件
     def save_lic(cipherCode):
         path = E2.get()
         if os.path.exists(path):
-            f = open(path+'/license.lic', 'wb')
+            # 由于是bytes类型，必须使用wb，读取的时候使用rb
+            f = open(path + '/license.lic', 'wb')
             f.write(cipherCode)
             f.close()
         else:
@@ -64,11 +67,10 @@ def main():
     E2 = Entry(top, bd=5)
     E2.pack(expand=1)
 
-    print(E1.get())
     # 创建一个装按钮的容器
     panel = tkinter.Frame(top)
     # 创建按钮对象 指定添加到哪个容器中 通过command参数绑定事件回调函数
-    button1 = tkinter.Button(panel, text='手动', command=generate_lic)
+    button1 = tkinter.Button(panel, text='手动', command=generate_lic_manual)
     button1.pack(side='left')
     button2 = tkinter.Button(panel, text='自动', command=generate_lic_auto)
     button2.pack(side='left')
